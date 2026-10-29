@@ -53,3 +53,11 @@ Download the starting project, and open terminal at the root project folder and 
 Enter the claude code mode successfully:
 
 ![Picture 1](demo/Screenshot%202026-10-29%20214650.png)
+
+### Claude Code in Different Terminals
+
+Read these for troubleshooting on Windows:
+
+https://code.claude.com/docs/en/overview
+https://code.claude.com/docs/en/interactive-mode
+https://code.claude.com/docs/en/terminal-config

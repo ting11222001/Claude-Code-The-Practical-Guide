@@ -16,3 +16,18 @@ Done.
 
 ### Key Concepts
 
+Last updated: Oct 29, 2026
+
+Done.
+
+### Claude Code Setup
+
+Last updated: Oct 29, 2026
+
+Done.
+
+### Claude Code in Different Terminals
+
+Last updated: Oct 29, 2026
+
+Done.
