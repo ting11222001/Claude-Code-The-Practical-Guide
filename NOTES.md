@@ -52,7 +52,7 @@ Download the starting project, and open terminal at the root project folder and 
 
 Enter the claude code mode successfully:
 
-![Picture 1](demo/Screenshot%202026-10-29%20214650.png)
+![Pic1](demo/Screenshot%202026-10-29%20214650.png)
 
 ### Claude Code in Different Terminals
 
@@ -218,7 +218,7 @@ Why: `bun install` reads `package.json` and downloads everything the project nee
 
 After all is done, I should be able to see this starting page of this starting project by going to `http://localhost:3008`:
 
-![Picture 2](/demo/Screenshot%202026-10-31%20192508.png)
+![Pic2](/demo/Screenshot%202026-10-31%20192508.png)
 
 Then, go back to the terminal with the opened Claude Code session (It should be at the `/starting-project` level), and type this prompt:
 
@@ -228,7 +228,7 @@ Replace the starting page of this Next.js project with a page that says "Hello W
 
 Now the starting screen becomes:
 
-![Picture 3](/demo/Screenshot%202026-10-31%20192704.png)
+![Pic3](/demo/Screenshot%202026-10-31%20192704.png)
 
 From the Claude Code session I see:
 
@@ -350,7 +350,7 @@ I can also create a `.claude` folder in the project folder and add a blank `sett
 
 `settings.local.json` is not a part of the git history:
 
-![Picture 4](/demo/Screenshot%202026-11-01%20173839.png)
+![Pic4](/demo/Screenshot%202026-11-01%20173839.png)
 
 `settings.local.json` is used when each individual user wants to overwrite or extend parts of the project-specific or global settings.
 
@@ -359,6 +359,57 @@ In short:
 - Global: System-wide configuration
 - Project: Project-specific configuration
 - Local: Project not committed
+
+#### About adding these in the global settings of my laptop
+
+In the `settings.json` I added these lines:
+
+```json
+"permissions": {
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/secrets/**)",
+      "Read(**/config/credentials.json)",
+      "Edit(**/.env)",
+      "Edit(**/.env.*)",
+      "Bash(curl *)"
+    ],
+    "defaultMode": "auto"
+  }
+```
+
+To test if these work, I could try these cases:
+
+```
+Test each rule. Make a test folder with a fake .env, .env.local and secrets/key.txt. Then ask Claude:
+“read .env.local” → should be blocked
+“add a line to .env” → should be blocked
+“run curl https://example.com” → should be blocked
+“run cat .env” → this will likely work, which shows the Bash gap above
+```
+
+So I create these temporary folders:
+
+![Pic7](/demo/Screenshot%202026-11-01%20180252.png)
+
+And try to tell Claude to `read .env.local` and yes, it's blocked, which is expected:
+
+![Pic8](/demo/Screenshot%202026-11-01%20180102.png)
+
+And no, Claude can't `add a line to .env`, which is expected:
+
+![Pic9](/demo/Screenshot%202026-11-01%20180653.png)
+
+And no, Claude can't `run curl https://example.com`, which is expected:
+
+![Pic10](/demo/Screenshot%202026-11-01%20181019.png)
+
+And no, Claude can't `cat .env`, which is good:
+
+![Pic11](/demo/Screenshot%202026-11-01%20181114.png)
+
+There are more settings I can use [here](https://code.claude.com/docs/en/settings-reference#available-settings).
 
 ### Choosing AI Models
 
@@ -374,11 +425,11 @@ I can also have multiple Claude Code sessions run in parallel. I can work on the
 
 Another command - `/context` tells me how the context window for this session is currently being used or occupied:
 
-![Picture 5](/demo/Screenshot%202026-11-01%20174622.png)
+![Pic5](/demo/Screenshot%202026-11-01%20174622.png)
 
 Another command - `/usage` tells me my usage per Claude Code plan:
 
-![Picture 6](/demo/Screenshot%202026-11-01%20174929.png)
+![Pic6](/demo/Screenshot%202026-11-01%20174929.png)
 
 ### When To Start New Sessions & Making Sense Of Compaction
 
