@@ -261,3 +261,109 @@ Today's progress:
 Resume this session with:
 claude --resume 0342b13b-37e1-4017-970e-18b5add6d358
 ```
+
+I restarted the extension, `Claude Code for VS Code`, to make sure I will be able to see the code comparison from Claude Code sessions next time.
+
+### A Glimpse At The Claude Desktop App
+
+Just showing there are `chat` tab and `code` tab in the desktop app. There's also mobile app with the two tabs.
+
+For the majority of this course, just use the Claude Code CLI.
+
+### Configuring Claude Code
+
+I can see `.claude` folder in `C:\Users\<my name>\.claude`.
+
+In there, there is a `settings.json` for us to add global settings:
+
+```json
+{
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {
+    "claude-plugins-official": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-official"
+      }
+    },
+    "claude-code-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-code"
+      }
+    }
+  },
+  "effortLevel": "high",
+  "autoUpdatesChannel": "latest"
+}
+```
+
+Or run `/config` in a Claude Code session.
+
+In the `settings.json` I can do this:
+
+```json
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {
+    "claude-plugins-official": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-official"
+      }
+    },
+    "claude-code-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-code"
+      }
+    }
+  },
+  "effortLevel": "high",
+  "autoUpdatesChannel": "latest",
+  "permissions": {  // here!
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/secrets/**)",
+      "Read(**/config/credentials.json)",
+      "Edit(**/.env)",
+      "Edit(**/.env.*)",
+      "Bash(curl *)"
+    ]
+  }
+}
+```
+
+Reasons for each change:
+
+- `**/` instead of `./`. `./` means the current folder only. `**/` matches the file in any subfolder too, like `backend/.env`. So `Read(./.env)` is already covered by `Read(**/.env)`, and you can remove it.
+- Added `Read(**/.env.*)`. `**/.env` does not match `.env.local` or `.env.production`. You had `./.env.*` but only for the current folder.
+- `Edit` instead of `Write`. In the official docs, the file rule types are `Read` and `Edit`, and `Edit` rules cover all the tools that change files.
+
+I can also create a `.claude` folder in the project folder and add a blank `settings.json` file. This will overwrite the global claude setting in this laptop. I also add a `settings.local.json` which is a project specific settings file that will overwrite the global settings and the `settings.json` files.
+
+`settings.local.json` is not a part of the git history:
+
+![Picture 4](/demo/Screenshot%202026-11-01%20173839.png)
+
+`settings.local.json` is used when each individual user wants to overwrite or extend parts of the project-specific or global settings.
+
+In short:
+
+- Global: System-wide configuration
+- Project: Project-specific configuration
+- Local: Project not committed
+
+### Choosing AI Models
+
+One command you should be aware of right from the start is the `/model` command which let's you choose the AI model you want to use.
+
+### Understanding Sessions & Context
+
+Use `/clear` to start a new session.
