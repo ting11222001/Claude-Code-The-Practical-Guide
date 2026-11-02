@@ -452,3 +452,47 @@ Start from here:
 ```
 claude --resume 88424d37-8bd3-476f-8496-bf27f8a5945a
 ```
+
+#### To explore the code
+
+I can just do this:
+
+```bash
+$ claude "explain this project"
+```
+
+And it will start a Claude Code session with that prompt:
+
+![Pic7](/demo/Screenshot%202026-11-02%20205512.png)
+
+Here's the project overview:
+
+![Pic8](/demo/Screenshot%202026-11-02%20205824.png)
+
+So Claude Code can do more than editing code.
+
+I can also add this `-p` flag to let it run in the background:
+
+```bash
+$claude -p "explain this project"
+```
+
+And it will give me response directly in the terminal as well:
+
+![Pic10](/demo/Screenshot%202026-11-02%20210649.png)
+
+#### To go back to an older session
+
+I can use `/resume` and  I can choose a previous session from the list:
+
+![Pic9](/demo/Screenshot%202026-11-02%20210323.png)
+
+Or use this `-c` flag to let it start with the last session I worked on:
+
+```bash
+$claude -c
+```
+
+Which is the last project explanation session.
+
+
