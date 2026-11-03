@@ -495,4 +495,32 @@ $claude -c
 
 Which is the last project explanation session.
 
+### Advanced Permissions Management
 
+Use `shift + tab` to switch to `accept edits on` or `manual edits on`.
+
+For example, prompt CC:
+
+```
+Add a list (bullet points) with advantages of Claude Code to the starting page
+```
+
+This is the manual mode where it will keep asking for permissions:
+
+![Pic10](/demo/Screenshot%202026-11-03%20210843.png)
+
+Now the list is shown on the starting page:
+
+![Pic11](/demo/Screenshot%202026-11-03%20211001.png)
+
+Then, try prompting CC:
+
+```
+create a new git commit
+```
+
+And I then switch to `auto mode on` so it won't keep asking for my permissions (if using `accept edits on` then anything OTHER THAN editing a code file will still ask me). 
+
+Also, I said only commit the changes of the changed starting page:
+
+![Pic12](/demo/Screenshot%202026-11-03%20211511.png)
