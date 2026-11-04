@@ -601,7 +601,7 @@ It gives a code change like this:
 
 I can either have regular commits so I can easily reset back to the previous version of my code, or I can undo changes through CC like hitting `esc` key twice and I can go back to a snapshot i.e. a point of time:
 
-![Pic15](/demo//Screenshot%202026-11-04%20211327.png)
+![Pic15](/demo/Screenshot%202026-11-04%20211327.png)
 
 I chose to go back to the prompt, and then it prompts me to decide what to restore - I chose restore code and convo.
 
