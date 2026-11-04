@@ -524,3 +524,65 @@ And I then switch to `auto mode on` so it won't keep asking for my permissions (
 Also, I said only commit the changes of the changed starting page:
 
 ![Pic12](/demo/Screenshot%202026-11-03%20211511.png)
+
+### Running Claude Code via Docker Sandboxes
+
+If I want Claude Code to run on itself without worrying about it messing up my local machine, then I can consider running it in a docker env.
+
+For example, do this to run up a docker sandbox to run Claude Code on my project:
+
+```bash
+$docker sandbox run claude
+```
+
+Quickly check - yeah I do have docker installed:
+
+```bash
+$ docker -v
+Docker version 29.2.0, build 0b9d198
+```
+
+Then, run this command:
+
+```bash
+$ docker sandbox run claude
+Starting sandboxd daemon...
+Daemon started (PID: 12844, socket: \\.\pipe\docker_sandboxes_sandboxd)
+Logs: C:\Users\Li-Ting\.docker\sandboxes\daemon.log
+Creating new sandbox 'claude-starting-project'...
+claude-code: Pulling from docker/sandbox-templates
+b26dfee8a76a: Downloading [=============================================>     ]  120.6MB/132.2MB
+435bf5c20694: Pull complete 
+d9d511d19a19: Pull complete 
+10635614e382: Pull complete 
+b0c095d3a796: Pull complete 
+372924dae370: Pull complete 
+fcb35e50b26e: Pull complete 
+cc3748c342ac: Pull complete 
+df8785da9ae0: Pull complete 
+0a300ff8534d: Pull complete 
+288ba8dd0056: Pull complete 
+1094b96aabd5: Pull complete 
+2429833e0590: Downloading [================>                                  ]  122.7MB/361.7MB
+4768dec80891: Pull complete 
+a54c5bc1b691: Pull complete 
+44136fa355b3: Download complete 
+d7163075ad37: Download complete 
+bc1cc6582f3b: Download complete
+``` 
+
+I will try it again tomorrow when I'm with better WIFI.
+
+I gave up haha.
+
+### Using Claude Code's Native Sandboxing
+
+Other than using docker sandbox, CC also has native sandbox.
+
+Every CC command is the same, just in this isolated environment.
+
+Oh no I can't use it in my windows laptop:
+
+![Pic13](/demo/Screenshot%202026-11-04%20210200.png)
+
+This concept is basically making sure CC only access the code in this project and make sure CC doesn't work outside of the current network access.
