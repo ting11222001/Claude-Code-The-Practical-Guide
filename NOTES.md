@@ -586,3 +586,29 @@ Oh no I can't use it in my windows laptop:
 ![Pic13](/demo/Screenshot%202026-11-04%20210200.png)
 
 This concept is basically making sure CC only access the code in this project and make sure CC doesn't work outside of the current network access.
+
+### Undoing Actions & The Importance of Version Control Systems
+
+Try this prompt and I might not like it:
+
+```bash
+> Output an increment counter on the home page
+```
+
+It gives a code change like this:
+
+![Pic14](/demo/Screenshot%202026-11-04%20210942.png)
+
+I can either have regular commits so I can easily reset back to the previous version of my code, or I can undo changes through CC like hitting `esc` key twice and I can go back to a snapshot i.e. a point of time:
+
+![Pic15](/demo//Screenshot%202026-11-04%20211327.png)
+
+I chose to go back to the prompt, and then it prompts me to decide what to restore - I chose restore code and convo.
+
+So all clear now:
+
+![Pic16](/demo/Screenshot%202026-11-04%20211524.png)
+
+Another way is to use the `/rewind` command which will list out the session I want to rewind back.
+
+Always double check though - Git version control is usually more reliable.
