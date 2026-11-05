@@ -2,6 +2,12 @@
 
 ## Section 1: Getting Started
 
-Last updated: Oct 31, 2026
+Last updated: Nov 4, 2026
 
-Work in progress.
+Finished.
+
+## Section 2: Key Features & Efficient Usage
+
+Last updated: Nov 5, 2026
+
+In Progress...

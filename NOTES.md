@@ -612,3 +612,26 @@ So all clear now:
 Another way is to use the `/rewind` command which will list out the session I want to rewind back.
 
 Always double check though - Git version control is usually more reliable.
+
+## Section 2: Key Features & Efficient Usage
+
+### Module Introduction
+
+Using Claude Code:
+```
+Prompt & Context Engineering
+Plan Mode
+Memory Management & CLAUDE.MD
+Using Custom Subagents
+Working with Agent Skills
+```
+
+### Making Sense of Prompt & Context Engineering
+
+Good input = good results
+
+Prompt & Context Engineering is about this:
+
+```
+Specific instruction(s) + Relevant context / extra information
+```
