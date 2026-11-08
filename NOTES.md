@@ -635,3 +635,90 @@ Prompt & Context Engineering is about this:
 ```
 Specific instruction(s) + Relevant context / extra information
 ```
+
+### Prompt Engineering In Action & Working with Specs
+
+I'm building a note taking app:
+- user can create notes using a rich text editor.
+- user can view, edit and delete their notes.
+- an additional feature: allow users to share their notes, so they can view notes that don't belong to them.
+
+What is that "prompt" when we build an app from scratch?
+
+It can be a "specification doc" that describe the app.
+
+The tutorial created the spec doc with the help of other AI model e.g. ChatGPT by describing the app to it first.
+
+I used the tutorial's `SPEC.md` and saved it to the root of the project.
+
+After that, I open a CC session to ask it to improve the `SPEC.md`.
+
+In this prompt:
+- `@` is the official way of including a specfic file into the prompt.
+- `Better Auth` library doc is [here](https://better-auth.com/docs/concepts/database#core-schema). For example, the `user` table needs a certain schema shape. I can copy that doc page as a markdown.
+
+![Pic17](/demo/Screenshot%202026-11-08%20211102.png)
+
+- `<better-auth-database-docs></better-auth-database-docs>`: the tutorial likes to use the xml tags when inserting a longer text or error message, but it helps the LLM know where a specific content starts and ends.
+
+- Run this prompt in `accept edits on` mode to allow CC to auto edit the file. Press `Shift + Enter` to have multi-line inputs in the CC session:
+
+```bash
+We're building an app described in @..\SPEC.MD
+
+Please format this file as proper markdown.
+
+Also update the file and update the part about the "users" table and auth-related tables.
+We're using the better-auth library which expects a certain database structure.
+
+Here's the official better-auth database documentation article:
+<better-auth-database-docs>
+[Pasted text #2 +1059 lines]
+</better-auth-database-docs>
+```
+
+![Pic18](/demo/Screenshot%202026-11-08%20211825.png)
+
+After it's done:
+
+![Pic19](/demo/Screenshot%202026-11-08%20212414.png)
+
+### Prompt & Context Engineering Recommendation
+
+As explained, writing good prompts and providing helpful context is essential for achieving good results.
+
+Therefore, here are some recommendations / best practices you should consider.
+
+#### Concise & Precise
+
+Keep your prompts concise and focused. Don't overdo, you should, of course, accurately and clearly describe the task you want the AI to tackle. But absolutely avoid including details that don't matter or unnecessary fluff.
+
+#### No Unnecessary Context
+
+Providing useful (!) context is crucial. But providing context that actually doesn't matter can be counterproductive.
+
+For example, avoid referencing (@some-file) a file you THINK may matter. Focus on pointing at files you KNOW matter.
+
+The same is, of course, true for documentation articles or any other kind of information that's not really relevant => Avoid it!
+
+#### Think, Plan, Prompt
+
+When working with AI, you may be tempted to just start typing and then "fix stuff over time". Don't do that!
+
+Think first, then make a plan, then write a good prompt. If you find yourself asking for follow-ups or providing clarifications a lot, consider putting more effort into upfront planning. Even when using "Plan" mode (which you should use for all tasks that aren't super trivial).
+
+#### Don't "Test" The AI
+
+If you know that a task will need the AI to overcome a certain challenge, or if you know about particularly challenging part involved by a task, DON'T hide that information from the AI.
+
+Sure, it can be a nice feeling to see the AI struggle and fail, but if you want to get the job done, share all crucial information with the AI agent.
+
+So, for example, if you know about a particular pitfall or common mistake, include it (AND a recommended solution) in your initial prompt.
+
+#### Explicitly Tell The AI About Tools It Should Use
+
+AI agents like Claude Code can use many tools - some built-in (like the "bash" tool, web requests etc.) and some provided via MCP servers (covered later in the course). There also are features like "subagents" or "skills" you can leverage (also covered later).
+
+If you know that a certain tool or feature should be used for a (part of a) task - explicitly tell the AI to do so. Don't hope it automatically uses the right tool or feature just because it theoretically could.
+
+There's one main theme across pretty much all recommendations: YOU are in control. YOU steer the AI.
