@@ -722,3 +722,65 @@ AI agents like Claude Code can use many tools - some built-in (like the "bash" t
 If you know that a certain tool or feature should be used for a (part of a) task - explicitly tell the AI to do so. Don't hope it automatically uses the right tool or feature just because it theoretically could.
 
 There's one main theme across pretty much all recommendations: YOU are in control. YOU steer the AI.
+
+### Initializing Claude Projects
+
+I could manually install some packages like:
+- `zod`: helps with validating user input
+- `Tiptap` rich text editor: refer to the doc [here](https://tiptap.dev/docs/editor/getting-started/install/react#install-tiptap-dependencies) to append this `@tiptap/react @tiptap/pm @tiptap/starter-kit` part
+
+```bash
+$bun add better-auth zod @tiptap/react @tiptap/pm @tiptap/starter-kit
+```
+
+![Pic20](/demo/Screenshot%202026-11-10%20203243.png)
+
+The good thing to do this manually is that sometimes CC can just update the `package.json` file with some older dependencies.
+
+Another package I need to install but only to the `devDependencies` is this (it helps avoiding certain typescript errors related to bun APIs):
+
+```bash
+$bun add -D @types/bun
+```
+
+![Pic21](/demo/Screenshot%202026-11-10%20203336.png)
+
+Now, start a new CC session.
+
+Run the `/init` if I haven't used CC with this new project to create the `CLAUDE.md` file.
+
+### Crafting Great CLAUDE.MD Files
+
+There should be at least one CLAUDE.md file at the root project folder.
+
+This file will be loaded automatically into any new session I create in CC.
+
+And I need to make sure `bun` runtime gets used for this commands in `package.json`:
+
+```json
+// old
+"scripts": {
+  "dev": "next dev",
+  "build": "next build",
+  "start": "next start",
+  "lint": "eslint"
+}
+
+// new
+"scripts": {
+  "dev": "bun run --bun next dev",
+  "build": "bun run --bun next build",
+  "start": "bun run --bun next start",
+  "lint": "eslint"
+},
+```
+
+Make sure my `CLAUDE.md` is brief and relevant!
+
+I can update the content of it to be shorter after it's generated, and can also add extra rules manually.
+
+I could have multiple `CLAUD.md` files in my project and I can put them into a subfolder. Just note that those nested `CLAUDE.md` files will only be read and loaded by CC when CC is working in that subfolder.
+
+For example, if I created a `CLAUDE.md` file in the `app` folder, then it only gets read when CC is working a file inside the `app` folder.
+
+The main purpose of `CLAUDE.md` at the root project folder is to store some long-term memory that should be accessible across different CC sessions and those core instructions that will apply to essentially every prompt.
