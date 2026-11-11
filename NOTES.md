@@ -784,3 +784,26 @@ I could have multiple `CLAUD.md` files in my project and I can put them into a s
 For example, if I created a `CLAUDE.md` file in the `app` folder, then it only gets read when CC is working a file inside the `app` folder.
 
 The main purpose of `CLAUDE.md` at the root project folder is to store some long-term memory that should be accessible across different CC sessions and those core instructions that will apply to essentially every prompt.
+
+### CLAUDE.md vs Auto Memory
+
+Claude Code has two ways to keep instructions and information across sessions.
+
+#### 1. CLAUDE.md (you manage it)
+
+- You write it yourself.
+- It holds key info and rules for every session.
+- Keep it short and focused. Extra content wastes context space and can make results worse.
+
+#### 2. Auto Memory (Claude manages it)
+
+- Added in version 2.1.59.
+- Claude Code saves what it learns by itself, for example a mistake you corrected many times or a code style you prefer.
+- Stored in `~/.claude/projects/<project>/memory/MEMORY.md`, plus optional topic files in the same folder.
+- The first 200 lines of `MEMORY.md` load in each new conversation.
+- Claude is set up to keep these files short, for the same reason as CLAUDE.md.
+- Use `/memory` to turn it on or off, set it up, and view or edit the files.
+
+#### Key point
+
+Auto Memory adds to CLAUDE.md. It does not replace it. If you already know a rule you want followed every time, put it in CLAUDE.md yourself. Don't rely on Claude to remember it.
