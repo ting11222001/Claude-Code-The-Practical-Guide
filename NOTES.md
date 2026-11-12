@@ -807,3 +807,160 @@ Claude Code has two ways to keep instructions and information across sessions.
 #### Key point
 
 Auto Memory adds to CLAUDE.md. It does not replace it. If you already know a rule you want followed every time, put it in CLAUDE.md yourself. Don't rely on Claude to remember it.
+
+### Leveraging Plan Mode
+
+Focus on smaller tasks first.
+
+Can run multiple CC instances in parallel i.e. one CC session each per terminal.
+
+Start with the below prompt and use `plan mode`:
+
+```bash
+Let's start building the application described in @SPEC.MD .
+
+Start by setting up the core route structure. Only add a dummy message to each page. No actual page content yet.
+
+Just create all those different page.tsx files for the different application routes. Don't implement authentication yet.
+```
+
+Even if the task seems simple, it's better to start with the plan mode. It's the only mode that CC will gather info and ask you for clarification question, turning good prompts into amazing prompts.
+
+```bash
+❯ Let's start building the application described in @SPEC.MD .                                                                    
+                                                                                                                                  
+  Start by setting up the core route structure. Only add a dummy message to each page. No actual page content yet.                
+                                                                                                                                  
+  Just create all those different page.tsx files for the different application routes. Don't implement authentication yet.        
+  ⎿  Read SPEC.MD (581 lines)
+
+  Searched for 1 pattern, read 1 file (ctrl+o to expand)
+
+● Updated plan
+  ⎿  /plan to preview
+
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Ready to code?
+
+ Here is Claude's plan:
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+ Plan: Core route scaffold
+
+ Context
+
+ Start building the SPEC.MD app by creating the route structure (SPEC §8.1–8.2). Placeholder pages only — no content, no auth, no
+ layout changes.
+
+ Files
+
+ Each page is a server component returning <main className="p-6"><h1>…</h1></main> with a dummy message.
+
+ ┌─────────────┬──────────────────────────────────────────────┬──────────────────────────────────────────────────────┐
+ │    Route    │                     File                     │                        Notes                         │
+ ├─────────────┼──────────────────────────────────────────────┼──────────────────────────────────────────────────────┤
+ │ /           │ app/page.tsx (replace existing demo content) │ "Landing page"                                       │
+ ├─────────────┼──────────────────────────────────────────────┼──────────────────────────────────────────────────────┤
+ │ /login      │ app/(auth)/login/page.tsx                    │ "Login page"                                         │
+ ├─────────────┼──────────────────────────────────────────────┼──────────────────────────────────────────────────────┤
+ │ /register   │ app/(auth)/register/page.tsx                 │ "Register page"                                      │
+ ├─────────────┼──────────────────────────────────────────────┼──────────────────────────────────────────────────────┤
+ │ /dashboard  │ app/dashboard/page.tsx                       │ "Dashboard"                                          │
+ ├─────────────┼──────────────────────────────────────────────┼──────────────────────────────────────────────────────┤
+ │ /notes/[id] │ app/notes/[id]/page.tsx                      │ async; params: Promise<{ id: string }>, shows id     │
+ ├─────────────┼──────────────────────────────────────────────┼──────────────────────────────────────────────────────┤
+ │ /p/[slug]   │ app/p/[slug]/page.tsx                        │ async; params: Promise<{ slug: string }>, shows slug │
+ └─────────────┴──────────────────────────────────────────────┴──────────────────────────────────────────────────────┘
+
+ Not in scope: API routes, components, layout.tsx header, auth.
+
+ Verification
+
+ - bun x tsc --noEmit and bun run lint pass
+ - bun run dev, visit each route and confirm dummy message renders
+```
+
+It also saves its plans locally temporarily:
+
+```bash
+ctrl+g to edit in Notepad · ~\.claude\plans\pasted-content-id-afdd-let-s-start-dreamy-tarjan.md
+```
+
+So it will be able to refer back even if the context window is cleared or closed.
+
+Then follow up prompt:
+
+```bash
+I only want a single "/authenticate" route which supports only email + password auth
+```
+
+As the current plan has both `/login` and `/register` routes.
+
+So I can tell CC to update its plan:
+
+![Pic22](/demo/Screenshot%202026-11-12%20205103.png)
+
+Once happy with the updated plan:
+
+```bash
+ User approved Claude's plan
+⎿  Plan saved to: ~\.claude\plans\pasted-content-id-afdd-let-s-start-dreamy-tarjan.md · /plan to edit
+Plan: Core route scaffold
+
+Context
+
+Start building the SPEC.MD app by creating the route structure (SPEC §8.1–8.2). Placeholder pages only — no content, no auth,
+no layout changes.
+
+Files
+
+Each page is a server component returning <main className="p-6"><h1>…</h1></main> with a dummy message.
+
+  ┌───────────────┬─────────────────────────────────────┬─────────────────────────────────────────────────────────────────────┐
+  │     Route     │                File                 │                                Notes                                │
+  ├───────────────┼─────────────────────────────────────┼─────────────────────────────────────────────────────────────────────┤
+  │ /             │ app/page.tsx (replace existing demo │ "Landing page"                                                      │
+  │               │  content)                           │                                                                     │
+  ├───────────────┼─────────────────────────────────────┼─────────────────────────────────────────────────────────────────────┤
+  │ /authenticate │ app/authenticate/page.tsx           │ "Authenticate (email + password sign in / sign up)" — single auth   │
+  │               │                                     │ route, replaces SPEC's separate login/register                      │
+  ├───────────────┼─────────────────────────────────────┼─────────────────────────────────────────────────────────────────────┤
+  │ /dashboard    │ app/dashboard/page.tsx              │ "Dashboard"                                                         │
+  ├───────────────┼─────────────────────────────────────┼─────────────────────────────────────────────────────────────────────┤
+  │ /notes/[id]   │ app/notes/[id]/page.tsx             │ async; params: Promise<{ id: string }>, shows id                    │
+  ├───────────────┼─────────────────────────────────────┼─────────────────────────────────────────────────────────────────────┤
+  │ /p/[slug]     │ app/p/[slug]/page.tsx               │ async; params: Promise<{ slug: string }>, shows slug                │
+  └───────────────┴─────────────────────────────────────┴─────────────────────────────────────────────────────────────────────┘
+
+Not in scope: API routes, components, layout.tsx header, auth.
+
+Verification
+
+- bun x tsc --noEmit and bun run lint pass
+- bun run dev, visit each route and confirm dummy message renders
+```
+
+then I can let it code it up:
+
+![Pic23](/demo/Screenshot%202026-11-12%20205423.png)
+
+And run it up to check:
+
+```bash
+$ PORT=3008 bun run dev
+```
+
+For each route it looks like these:
+
+route `/`:
+
+![Pic24](/demo/Screenshot%202026-11-12%20205728.png)
+
+route `/authenticate`:
+
+![Pic25](/demo/Screenshot%202026-11-12%20205759.png)
+
+route `/dashboard`:
+
+![Pic26](/demo/Screenshot%202026-11-12%20205851.png)
+
+etc.
