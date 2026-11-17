@@ -964,3 +964,45 @@ route `/dashboard`:
 ![Pic26](/demo/Screenshot%202026-11-12%20205851.png)
 
 etc.
+
+### Using Claude Code's Built-in Tools
+
+Next use this prompt
+- In CLAUDE.md, I already told CC to refer to @SPEC.MD so it should be able to pick it up
+
+```bash
+Implement authentication and database access.
+
+Add a "lib" folder with "auth.ts" and "db.ts" files. Export a db handle in the db.ts file and make sure WAL mode is used and all required database tables are created if they don't exist yet.
+```
+
+But there will be extra details for Bun accessing a SQLite database and also extra details for Better Auth package.
+
+I could ask CC to refer to a specific doc page by providing a link in the prompt.
+
+For example tell CC to look at this:
+
+```bash
+Implement authentication and database access.
+
+Add a "lib" folder with "auth.ts" and "db.ts" files. Export a db handle in the db.ts file and make sure WAL mode is used and all required database tables are created if they don't exist yet.
+
+Visit the official docs websites:
+- https://bun.com/docs/runtime/sqlite
+```
+
+Or just say:
+
+```bash
+Implement authentication and database access as described in @SPEC.MD .
+
+Add a "lib" folder with "auth.ts" and "db.ts" files. Export a db handle in the db.ts file and make sure WAL mode is used and all required database tables are created if they don't exist yet.
+
+Use web search to find the relevant documentation for Bun SQLite and better-auth setup (with next.js and Bun SQLite).
+```
+
+but all these prompts rely on my inputs like I need to explicitly feed CC some context.
+
+Another way is to use an MCP.
+
+### Using MCP Servers & More On Permissions
