@@ -1006,3 +1006,36 @@ but all these prompts rely on my inputs like I need to explicitly feed CC some c
 Another way is to use an MCP.
 
 ### Using MCP Servers & More On Permissions
+
+MCP is simply giving CC more tools for it to leverage.
+
+https://code.claude.com/docs/en/mcp-quickstart
+
+For example, context7, which gives CC the ability to access official docs of libraries.
+
+https://github.com/upstash/context7
+
+Run this command to install context7 to my Claude Code:
+
+```bash
+$ claude mcp add context7 -- npx -y @upstash/context7-mcp
+```
+
+It's not on the README of context7 github anymore. There is more detailed command on here:
+
+https://context7.com/docs/resources/all-clients#claude-code
+
+The simple command still works:
+
+It just adds Context7 as a local server. The official Context7 docs now show two small changes, though:
+
+- `--scope user`. This makes Context7 available in all my projects, not just the current folder. Without it, the default scope is “local”, so it only works in the folder where I ran the command.
+- `--api-key`. The key is optional, but it gives me higher rate limits and access to private repos. I can get one free at `context7.com/dashboard`.
+
+The current local version from the docs is:
+
+```bash
+claude mcp add --scope user context7 -- npx -y @upstash/context7-mcp --api-key YOUR_API_KEY
+```
+
+Anyways, I will just run the simple one.
