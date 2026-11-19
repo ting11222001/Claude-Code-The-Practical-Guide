@@ -1039,3 +1039,24 @@ claude mcp add --scope user context7 -- npx -y @upstash/context7-mcp --api-key Y
 ```
 
 Anyways, I will just run the simple one.
+
+Once I run the command it will print this:
+
+```bash
+$ claude mcp add context7 -- npx -y @upstash/context7-mcp
+✔ Added stdio MCP server context7 with command: npx -y @upstash/context7-mcp to local config
+File modified: C:\Users\Li-Ting\.claude.json [project: C:/Users/Li-Ting/Documents/Projects/Claude-Code-The-Practical-Guide]
+```
+
+Then start a new CC session and paste in this prompt in:
+- This is particularly useful when I don't know or don't want to look up which doc to look at for a library.
+- Switch to plan mode before running this prompt!
+
+```bash
+Implement authentication and database access as described in @SPEC.MD .
+
+Add a "lib" folder with "auth.ts" and "db.ts" files. Export a db handle in the db.ts file and make sure WAL mode is used and all required database tables are created if they don't exist yet.
+
+Use web search or the context7 mcp to find the relevant documentation for Bun SQLite and better-auth setup (with next.js and Bun SQLite).
+```
+
