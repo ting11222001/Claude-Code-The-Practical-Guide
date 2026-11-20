@@ -1060,3 +1060,304 @@ Add a "lib" folder with "auth.ts" and "db.ts" files. Export a db handle in the d
 Use web search or the context7 mcp to find the relevant documentation for Bun SQLite and better-auth setup (with next.js and Bun SQLite).
 ```
 
+Its plan:
+
+```bash
+ Ready to code?
+
+ Here is Claude's plan:
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+ Plan: Auth + DB layer (lib/db.ts, lib/auth.ts)
+
+ Context
+
+ SPEC.MD §5–§7 requires a Bun SQLite data layer and better-auth (email/password) wired into Next.js. Only the page scaffold exists;
+ starting-project/lib/ is empty. Goal: a working DB handle (WAL, FKs, tables auto-created) and a better-auth server instance +
+ Next route handler so later steps (notes repo, API routes, UI) can build on it.
+
+ Docs confirmed via context7 (better-auth v1.7):
+ - betterAuth({ database: new Database(path) }) accepts a bun:sqlite Database directly (built-in Kysely BunSqliteDialect).
+ - Next: toNextJsHandler(auth) at app/api/auth/[...all]/route.ts; nextCookies() must be the last plugin; server session via
+   auth.api.getSession({ headers: await headers() }).
+
+ Files (all under starting-project/)
+
+ 1. lib/db.ts (new)
+
+ - import { Database } from "bun:sqlite"; DB file at data/app.db (create data/ with mkdirSync(..., { recursive: true })).
+ - Singleton cached on globalThis (avoids multiple connections under Next dev HMR).
+ - On open: PRAGMA journal_mode = WAL;, PRAGMA foreign_keys = ON;, PRAGMA busy_timeout = 5000;.
+ - Run schema once via db.exec(...) with CREATE TABLE IF NOT EXISTS for user, session, account, verification (exact SQL from SPEC
+   §5.1, camelCase columns), notes, and CREATE INDEX IF NOT EXISTS for the 3 indexes in §5.2.
+ - Exports: db (the handle, as requested), getDb(), and typed helpers query<T>(sql, params?), get<T>(sql, params?), run(sql,
+   params?) per SPEC §6.1 (thin wrappers over db.query(sql).all/get/run).
+
+ 2. lib/auth.ts (new)
+
+ - betterAuth({ database: db, emailAndPassword: { enabled: true, minPasswordLength: 8 }, plugins: [nextCookies()] }), importing db
+   from ./db so auth and app share one connection with the same pragmas/schema.
+ - Export auth plus server helpers getSession() and getCurrentUser() (wrap auth.api.getSession({ headers: await headers() })) for
+   SSR/API 401 checks (SPEC §7.1).
+
+ 3. lib/auth-client.ts (new)
+
+ - createAuthClient() from better-auth/react; export signIn, signUp, signOut, useSession for client components.
+
+ 4. app/api/auth/[...all]/route.ts (new)
+
+ - export const { GET, POST } = toNextJsHandler(auth);
+
+ 5. Config
+
+ - .env.local (gitignored already): BETTER_AUTH_SECRET=<random>, BETTER_AUTH_URL=http://localhost:3000.
+ - .gitignore: add /data/ (SQLite file + -wal/-shm).
+ - next.config.ts: only if the bundler fails to resolve bun:sqlite, add serverExternalPackages: ["bun:sqlite"] (or equivalent
+   externals).
+
+ Verification
+
+ 1. bun x tsc --noEmit and bun run lint pass.
+ 2. bun run dev; confirm data/app.db (+ -wal) is created.
+ 3. bun -e query PRAGMA journal_mode → wal; sqlite_master lists the 5 tables + indexes.
+ 4. bun x --bun auth@latest check schema (or startup log) reports no schema mismatch.
+ 5. Sign-up/sign-in smoke test: curl -X POST localhost:3000/api/auth/sign-up/email -H "content-type: application/json" -d
+    '{"email":"a@b.com","password":"password123","name":"A"}' → 200 and a row in user/account; then GET /api/auth/get-session with
+    the returned cookie returns the user.
+
+    Approved Claude's plan
+  ⎿  Plan saved to: ~\.claude\plans\pasted-content-id-b80b-implement-authen-shiny-crayon.md · /plan to edit
+     Plan: Auth + DB layer (lib/db.ts, lib/auth.ts)
+
+     Context
+
+     SPEC.MD §5–§7 requires a Bun SQLite data layer and better-auth (email/password) wired into Next.js. Only the page scaffold
+     exists; starting-project/lib/ is empty. Goal: a working DB handle (WAL, FKs, tables auto-created) and a better-auth server
+     instance + Next route handler so later steps (notes repo, API routes, UI) can build on it.
+
+     Docs confirmed via context7 (better-auth v1.7):
+     - betterAuth({ database: new Database(path) }) accepts a bun:sqlite Database directly (built-in Kysely BunSqliteDialect).
+     - Next: toNextJsHandler(auth) at app/api/auth/[...all]/route.ts; nextCookies() must be the last plugin; server session via
+       auth.api.getSession({ headers: await headers() }).
+
+     Files (all under starting-project/)
+
+     1. lib/db.ts (new)
+
+     - import { Database } from "bun:sqlite"; DB file at data/app.db (create data/ with mkdirSync(..., { recursive: true })).
+     - Singleton cached on globalThis (avoids multiple connections under Next dev HMR).
+     - On open: PRAGMA journal_mode = WAL;, PRAGMA foreign_keys = ON;, PRAGMA busy_timeout = 5000;.
+     - Run schema once via db.exec(...) with CREATE TABLE IF NOT EXISTS for user, session, account, verification (exact SQL from
+       SPEC §5.1, camelCase columns), notes, and CREATE INDEX IF NOT EXISTS for the 3 indexes in §5.2.
+     - Exports: db (the handle, as requested), getDb(), and typed helpers query<T>(sql, params?), get<T>(sql, params?), run(sql,
+       params?) per SPEC §6.1 (thin wrappers over db.query(sql).all/get/run).
+
+     2. lib/auth.ts (new)
+
+     - betterAuth({ database: db, emailAndPassword: { enabled: true, minPasswordLength: 8 }, plugins: [nextCookies()] }), importing
+       db from ./db so auth and app share one connection with the same pragmas/schema.
+     - Export auth plus server helpers getSession() and getCurrentUser() (wrap auth.api.getSession({ headers: await headers() }))
+       for SSR/API 401 checks (SPEC §7.1).
+
+     3. lib/auth-client.ts (new)
+
+     - createAuthClient() from better-auth/react; export signIn, signUp, signOut, useSession for client components.
+
+     4. app/api/auth/[...all]/route.ts (new)
+
+     - export const { GET, POST } = toNextJsHandler(auth);
+
+     5. Config
+
+     - .env.local (gitignored already): BETTER_AUTH_SECRET=<random>, BETTER_AUTH_URL=http://localhost:3000.
+     - .gitignore: add /data/ (SQLite file + -wal/-shm).
+     - next.config.ts: only if the bundler fails to resolve bun:sqlite, add serverExternalPackages: ["bun:sqlite"] (or equivalent
+       externals).
+
+     Verification
+
+     1. bun x tsc --noEmit and bun run lint pass.
+     2. bun run dev; confirm data/app.db (+ -wal) is created.
+     3. bun -e query PRAGMA journal_mode → wal; sqlite_master lists the 5 tables + indexes.
+     4. bun x --bun auth@latest check schema (or startup log) reports no schema mismatch.
+     5. Sign-up/sign-in smoke test: curl -X POST localhost:3000/api/auth/sign-up/email -H "content-type: application/json" -d
+        '{"email":"a@b.com","password":"password123","name":"A"}' → 200 and a row in user/account; then GET /api/auth/get-session
+       externals).
+
+     Verification
+
+     1. bun x tsc --noEmit and bun run lint pass.
+     2. bun run dev; confirm data/app.db (+ -wal) is created.
+     3. bun -e query PRAGMA journal_mode → wal; sqlite_master lists the 5 tables + indexes.
+     4. bun x --bun auth@latest check schema (or startup log) reports no schema mismatch.
+     5. Sign-up/sign-in smoke test: curl -X POST localhost:3000/api/auth/sign-up/email -H "content-type: application/json" -d
+        '{"email":"a@b.com","password":"password123","name":"A"}' → 200 and a row in user/account; then GET /api/auth/get-session
+        with the returned cookie returns the user.
+...
+
+The database layer and the better-auth setup are in place. Type-check and lint pass, and the database starts up correctly. I
+  haven't run a sign-up through the dev server yet because the smoke test was blocked.
+
+  What I added (in starting-project/):
+  - lib/db.ts: exports db and getDb(), plus the query<T>, get<T> and run helpers from SPEC §6.1.
+    - Opens data/app.db and turns on WAL mode and foreign keys.
+    - Creates the 5 tables (user, session, account, verification, notes) and the 3 indexes only if they don't exist yet.
+    - Reuses a single connection, so dev-server reloads don't open new ones.
+  - lib/auth.ts: the better-auth setup, using the same db connection, with email/password sign-up (minimum 8 characters). It also
+    exports getSession() and getCurrentUser() for server code.
+  - lib/auth-client.ts: signIn, signUp, signOut and useSession for client components.
+  - app/api/auth/[...all]/route.ts: the route that handles all better-auth requests.
+  - .gitignore: now ignores /data/, where the database file lives.
+
+  The better-auth setup follows its current docs (via context7), which say it can use a Bun SQLite database directly.
+
+  Checks:
+  - tsc --noEmit and bun run lint both pass.
+  - Opening the database directly gave journal_mode=wal and foreign_keys=1, and all 5 tables and 3 indexes exist.
+  - Not tested: creating an account and getting a session back through the running app. My attempt to put a secret into .env.local
+    was blocked by the permission check, and so were the follow-up curl requests to the dev server.
+
+  You need to:
+  1. Create .env.local:
+  BETTER_AUTH_SECRET=<run: bun -e "console.log(crypto.randomUUID()+crypto.randomUUID())">
+  BETTER_AUTH_URL=http://localhost:3000
+  2. Run bun run dev and send POST /api/auth/sign-up/email. If Next fails with "can't resolve bun:sqlite", add
+     serverExternalPackages: ["bun:sqlite"] to next.config.ts.
+
+✻ Baked for 2m 4s · done 9:22 PM
+
+※ recap: We're setting up the database and login for the notes app, and the database code and login setup are written and pass 
+  type-check and lint. Next, create `.env.local` with a `BETTER_AUTH_SECRET`, then run `bun run dev` and test sign-up. (turn off 
+  recaps in /config)
+```
+
+#### 2026-11-20: Implement auth + DB layer (plan)
+
+**Prompt:**
+> Implement authentication and database access as described in `@SPEC.MD`.
+> Add a `lib` folder with `auth.ts` and `db.ts` files. Export a db handle in `db.ts`,
+> use WAL mode, and create all required tables if they don't exist yet.
+> Use web search or the context7 MCP for Bun SQLite and better-auth docs.
+
+**Plan (approved):**
+- `lib/db.ts`: `bun:sqlite` at `data/app.db`, singleton on `globalThis` (avoids extra
+  connections on dev reload). PRAGMAs: `journal_mode = WAL`, `foreign_keys = ON`,
+  `busy_timeout = 5000`. Tables and indexes created with `IF NOT EXISTS` (SPEC §5.1, §5.2).
+- `lib/auth.ts`: `betterAuth()` with the same `db`, email/password, `nextCookies()` last.
+  Helpers `getSession()` and `getCurrentUser()` (SPEC §7.1).
+- `lib/auth-client.ts`: `createAuthClient()` from `better-auth/react`.
+- `app/api/auth/[...all]/route.ts`: `toNextJsHandler(auth)`.
+- `.gitignore`: add `/data/`. Secrets go in `.env.local` (not committed).
+
+**Verification status**
+- [x] `bun x tsc --noEmit` passes (confirmed in later review)
+- [ ] `bun run lint`
+- [ ] `data/app.db` and `-wal` file created on dev start
+- [ ] `PRAGMA journal_mode` returns `wal`
+- [ ] `bun x --bun auth@latest check schema`
+- [ ] Sign-up/sign-in smoke test with `curl` (test account only)
+
+### Understanding Subagents
+
+While that prompt is running, learn about how CC works and how to optimise it.
+
+For example, use CC to check if my current implementation is in line with my expectations and the usage instructions by the libraries I'm using.
+
+```bash
+We're building @SPEC.MD .
+
+Please evaluate the existing codebase to check whether authentication and database access are implemented correctly (in line with the expectations explained in SPEC.MD and the official documentation for the libraries / technologies used).
+
+Use web search or the context7 mcp to look up docs.
+```
+
+Not in plan mode and not in edit mode.
+
+The advantage of subagent is that they have their own context window so they don't pollute the context window of the main agent.
+
+The summary of the subagent will be loaded into the main agent.
+
+Output:
+
+```bash
+Authentication and database access are set up correctly so far and match SPEC.MD and the better-auth 1.7 docs. There are no bugs,
+  but a few pieces aren't wired up yet. The type-check passes; I haven't run the app or the better-auth schema check.
+
+  What's correct
+  - lib/db.ts: bun:sqlite opens a single file at data/app.db and is created only once, even when Next reloads in dev. Every
+    connection turns on foreign_keys = ON, which SPEC §5 requires. The schema matches SPEC §5.1 exactly, including the four
+    better-auth tables with camelCase columns, the notes table and its indexes. getDb, query, get and run match §6.1.
+  - better-auth uses the same database: the docs show passing a bun:sqlite Database straight in as database. I also checked the
+    installed source: better-auth recognises Bun's driver and uses its built-in Bun SQLite support.
+  - lib/auth.ts: email and password sign-in is on, and nextCookies() is the last plugin, as the docs require. getSession() and
+    getCurrentUser() use auth.api.getSession({ headers: await headers() }), the documented way to read the session on the server
+    (§7.1).
+  - app/api/auth/[...all]/route.ts: toNextJsHandler(auth) is the documented way to mount the auth routes.
+  - lib/auth-client.ts: createAuthClient() with no baseURL is fine because the app and the auth routes are on the same site.
+  - The --bun flag in the scripts is required for bun:sqlite to load, and it's there.
+
+  Gaps and risks
+  1. No secret configured: there's no .env or .env.local, so BETTER_AUTH_SECRET isn't set. better-auth falls back to a default
+     secret in dev, which is insecure, and refuses to start in production. Set it, along with BETTER_AUTH_URL (the docs recommend
+     both). I couldn't check .env.example because your permission settings block reading it.
+  2. Pages aren't protected yet: /dashboard is a stub and doesn't check the session. SPEC §11 requires a server-side check on
+     /dashboard and /notes/[id]. Use the documented pattern: call getSession(), then redirect() if there's no session. You can also
+     add a Next 16 proxy.ts (the new name for middleware) as a first check, but keep the check on the page itself.
+  3. Not built yet: lib/notes.ts, /api/notes/* and the login/register UI don't exist. Every query in notes.ts needs to filter by
+     user_id = ?.
+  4. Tables are created on startup: db.ts creates the auth tables itself instead of using bun x --bun auth@latest migrate. That's
+     allowed under SPEC §5.1. Running bun x --bun auth@latest check schema once would confirm the tables match what better-auth
+     expects.
+  5. Optional: add import "server-only" to lib/db.ts and lib/auth.ts so they can't be pulled into browser code by accident.
+     minPasswordLength: 8 is already better-auth's default, so that line can go.
+
+  Sources: better-auth v1.7 docs (adapters/sqlite.mdx, integrations/next.mdx) and the installed @better-auth/kysely-adapter source.
+
+✻ Cooked for 1m 15s · done 9:29 PM
+
+※ recap: I was reviewing your notes app's login and database setup against SPEC.MD and the better-auth docs; both are set up 
+  correctly, with no bugs found. Next step: set BETTER_AUTH_SECRET in a .env file, then add session checks to the dashboard and note
+  pages. (turn off recaps in /config)
+```
+
+#### How do I know if subagents are used?
+
+In Claude Code, the main agent’s actions show as plain tool calls at the top level:
+
+```bash
+● Bash(...) runs a shell command
+Read 10 files reads files
+Called context7 3 times calls an MCP tool
+● Updated plan updates a plan
+```
+
+A sub agent shows up differently. The main agent starts it with an Agent call (older versions call it Task). It usually looks something like this:
+```bash
+● Explore(Find auth setup files)
+  ⎿  Done (12 tool uses · 30k tokens · 45s)
+```
+
+The key signs are:
+
+- The name is an agent type, such as Explore, Plan or general-purpose, not a tool like Bash or Read.
+- There’s a short task description in the brackets, written in plain English, not a command.
+- There’s a summary line with a tool use count, token count and time. The sub agent’s own steps are hidden inside it, not listed one by one.
+
+Your review output has none of these. Each line is a Bash, Read or context7 call, so the main agent did all the work itself.
+
+#### Does it matter?
+
+A subagent works in its own separate context. It does a job and sends back only the result. Each subagent uses its own context window separate from the main conversation. 
+
+This helps in a few cases:
+
+- Big codebase searches. The main chat stays clean, so answers stay sharp in long sessions.
+- Parallel work. Several subagents can search or review at the same time.
+- Focused jobs. For example, a code reviewer that can only read files and cannot change them.
+
+For small tasks, the main agent is often better. It is faster, it uses fewer tokens, and it keeps all the context in one place. So if your task is small, getting only the main agent is not a problem.
+
+#### How to get subagents on purpose
+
+- Just ask. The most flexible approach is simply asking Claude to use subagents in conversation. For example: “Use subagents to explore the auth and payment folders in parallel.” 
+- Name one. To make sure a specific subagent is used, mention it by name in your prompt. This bypasses automatic matching. For example: “Use the Explore agent to find all API routes.”
+- Create your own. Run /agents to see and create subagents for your project.
