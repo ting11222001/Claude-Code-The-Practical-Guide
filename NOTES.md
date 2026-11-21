@@ -1361,3 +1361,46 @@ For small tasks, the main agent is often better. It is faster, it uses fewer tok
 - Just ask. The most flexible approach is simply asking Claude to use subagents in conversation. For example: “Use subagents to explore the auth and payment folders in parallel.” 
 - Name one. To make sure a specific subagent is used, mention it by name in your prompt. This bypasses automatic matching. For example: “Use the Explore agent to find all API routes.”
 - Create your own. Run /agents to see and create subagents for your project.
+
+### Creating & Using A Custom Subagent
+
+Under the `.claude` folder I need to have a folder named `agents`.
+
+Inside that folder, add a markdown like `DocsExplorer.md`, so that CC can use it for this project. It can also be added globally by finding the root `.claude` folder under my username of this laptop and find/create a folder called `agent`. Then, add `DocsExplorer.md` there.
+
+`DocsExplorer.md` is referred from here:
+
+https://github.com/academind/claude-code-course-resources/blob/main/other/subagent/DocsExplorer.md
+
+For example:
+
+```markdown
+---
+name: DocsExplorer
+description: Documentation lookup specialist. Use proactively when needing docs for any library, framework, or technology. Fetches docs in parallel for multiple technologies.
+tools: WebFetch, WebSearch, Skill, MCPSearch
+model: sonnet
+---
+etc.
+```
+The `name` is the name of the sub agent.
+
+The `tools` can be added from this reference:
+
+https://code.claude.com/docs/en/tools-reference
+
+Especially `MCPSearch` allows CC to dynamically load MCP tools.
+
+As it's just for exploring docs, so the `model` can just be `sonnet`.
+
+Then describe in the `## Workflow` section in the markdown file to tell CC how that sub-agent should work.
+
+In the `## Lookup Strategy` section, `/llms.txt` is to tell CC to find the LLM-friendly pages for reference instead as many websites these days have that sort of format for their documentations.
+
+So now my prompt can just be as below i.e. can remove `Use web search or the context7 mcp to look up docs.` this line from the prompt:
+
+```bash
+We're building @SPEC.MD .
+
+Please evaluate the existing codebase to check whether authentication and database access are implemented correctly (in line with the expectations explained in SPEC.MD and the official documentation for the libraries / technologies used).
+```
