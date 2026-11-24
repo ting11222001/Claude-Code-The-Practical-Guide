@@ -1500,3 +1500,87 @@ Here's the output:
 
 ● Agent "Verify better-auth/bun:sqlite/Next docs" finished · 28s
 ```
+
+I expanded the DocsExplorer subagent's task log then I can see this:
+
+```bash
+› Message from DocsExplorer
+  Findings (Context7 was unavailable, so I used WebFetch on the official docs). Not checked: the better-auth env vars
+  (BETTER_AUTH_SECRET/BETTER_AUTH_URL) and the exact `emailAndPassword` option name for minimum password length. Also not checked:
+  Next.js `serverExternalPackages` for `bun:sqlite`, and whether `bunx auth@latest migrate` works with `bun:sqlite`.
+
+  **1. better-auth + bun:sqlite: a direct instance works, with no Kysely dialect needed**
+  Source: https://www.better-auth.com/docs/adapters/sqlite
+  - The docs list "Bun built-in SQLite" as a supported pattern:
+  ```ts
+  import { Database } from "bun:sqlite";
+  database: new Database("database.sqlite"),
+  ```
+  - For CLI commands, the docs say to use `bunx` with the `--bun` flag "to avoid type errors related to the `bun:sqlite` module".
+  That means `bunx --bun auth@latest ...`.
+  - SQLite is supported "under the hood via the Kysely adapter". better-sqlite3 is the recommended driver, and `node:sqlite` needs
+  Node 22.5 or later.
+
+  **2. Next.js integration**
+  Source: https://www.better-auth.com/docs/integrations/next
+  - Route handler at `app/api/auth/[...all]/route.ts`:
+  ```ts
+  import { auth } from "@/lib/auth";
+  import { toNextJsHandler } from "better-auth/next-js";
+  export const { GET, POST } = toNextJsHandler(auth);
+  ```
+  - `nextCookies()` is imported from `better-auth/next-js`. The docs say "make sure this is the last plugin in the array", as in
+  `plugins: [nextCookies()]`. It lets server actions set cookies.
+  - Server-side session check: `const session = await auth.api.getSession({ headers: await headers() })`, with `headers` from
+  `next/headers`.
+  - Client: `import { createAuthClient } from "better-auth/react"`. The page's example is `createAuthClient({ /* you can pass client
+  configuration here */ })`, so `baseURL` is not required there. I did not check the client docs for same-origin behaviour.
+  - Route protection in Next 16: "Next.js 16 replaces 'middleware' with 'proxy'". Use `proxy.ts` and export a `proxy` function.
+  Because the proxy runs on Node, it can call `auth.api.getSession({ headers: await headers() })` and redirect to `/sign-in` when
+  there's no session.
+  - `getSessionCookie` from `better-auth/cookies` "only checks for the existence of a session cookie". It is a fast, optimistic
+  redirect check and doesn't validate the session. Validate the session on the server in pages and actions.
+  - Next.js adds that a proxy matcher doesn't cover Server Functions on excluded paths, so check auth inside each server function
+  too (https://nextjs.org/docs/app/api-reference/file-conventions/proxy).
+
+  **3. emailAndPassword**
+  Source: https://www.better-auth.com/docs/authentication/email-password
+  - The page says the password "should be at least 8 characters long and max 128 by default".
+  - The option-name table didn't render, so the name isn't confirmed. From memory, it is `emailAndPassword.minPasswordLength` (and
+  `maxPasswordLength`). Treat that as unverified.
+  - `name` is required in `signUp.email`. The docs say "required, The name of the user", and the type is `name: string`. `image` and
+  `callbackURL` are optional.
+
+  **4. CLI**
+  Source: https://www.better-auth.com/docs/concepts/cli
+  - `migrate` is "available if you're using the built-in Kysely adapter". A raw SQLite `Database` goes through that adapter. The
+  page doesn't mention `bun:sqlite`, but the SQLite page's `--bun` note implies it works.
+  - `generate` writes an SQL file for Kysely that you can run yourself.
+  - The docs say nothing about `CREATE TABLE IF NOT EXISTS` conflicts. Creating the tables manually is a workable approach if the
+  schema matches what `generate` outputs. Run `generate` and compare the result to your tables.
+
+  **5. bun:sqlite**
+  Source: https://bun.sh/docs/api/sqlite
+  - `db.query(sql)` caches the compiled statement, not the results. Parameters are bound fresh on each call.
+  - The cache holds `Database.MAX_QUERY_CACHE_SIZE` entries (default 20), and SQL over 64 KB isn't cached.
+  - For one-off dynamic SQL, use `db.prepare()`, which returns a fresh, uncached statement.
+  - `.get()` returns `null` when no row matches (not `undefined`).
+  - Bun creates the file if it doesn't exist. `{ create: true }` is effectively the default, and `{ create: false }` throws if the
+  file is missing. `{ readonly: true, create: true }` throws a `TypeError`.
+  - The docs recommend WAL for most apps: `db.run("PRAGMA journal_mode = WAL;")`. `PRAGMA synchronous = NORMAL` gives faster
+  commits.
+  - With `strict: true`, a missing or misspelled named parameter throws. Without it, the parameter silently binds `NULL`.
+  - Named parameter keys can include the prefix (`$`, `:` or `@`) or omit it. If the object has both forms, the prefixed key wins.
+  With `strict: true`, the unprefixed key wins.
+
+  **6. Next.js 16**
+  Source: https://nextjs.org/docs/app/api-reference/file-conventions/proxy
+  - The `middleware` convention is "deprecated and has been renamed to `proxy`". Version history: "v16.0.0: Middleware is deprecated
+  and renamed to Proxy. Proxy defaults to the Node.js runtime".
+  - The `runtime` config option isn't available in proxy files, and setting it throws an error.
+  - The codemod is `npx @next/codemod@canary middleware-to-proxy .`.
+  - Without a `matcher`, proxy runs on every request, including static assets. Use a negative-lookahead matcher that excludes `api`,
+  `_next/static`, `_next/image` and so on.
+  - The proxy docs say nothing about `serverExternalPackages` or `bun:sqlite`. The better-auth docs only say to use `bunx --bun` for
+  the CLI.
+```
