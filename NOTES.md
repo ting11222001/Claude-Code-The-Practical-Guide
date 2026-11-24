@@ -1404,3 +1404,99 @@ We're building @SPEC.MD .
 
 Please evaluate the existing codebase to check whether authentication and database access are implemented correctly (in line with the expectations explained in SPEC.MD and the official documentation for the libraries / technologies used).
 ```
+
+### Encouraging Agent Usage
+
+To encourage CC to use `DocsExplorer.md` this sub agent, in the `CLAUDE.md` I can add this:
+
+```markdown
+Whenever working with any third-party library or something similar, you MUST look up the official documentation to ensure that you're working with up-to-date information.
+
+Use the DocsExplorer subagent for efficient documentation lookup.
+```
+
+Into here:
+
+```markdown
+# CLAUDE.md
+
+We're building the app described in @SPEC.MD. Read that file for general architectural tasks or to double-check the exact database structure, tech stack or application architecture.
+
+Keep your replies extremely concise and focus on conveying the key information. No unnecessary fluff, no long code snippets.
+
+Whenever working with any third-party library or something similar, you MUST look up the official documentation to ensure that you're working with up-to-date information.
+
+Use the DocsExplorer subagent for efficient documentation lookup.
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+```
+
+So now I can send out a prompt like this:
+
+```bash
+We're building @SPEC.MD .
+
+Please evaluate the existing codebase to check whether authentication and database access are implemented correctly (in line with the expectations explained in SPEC.MD and the official documentation for the libraries / technologies used).
+```
+
+Note that my CC session needs to be run under the `starting-project/` as Claude Code loads project subagents from `.claude/agents/` in the current project.
+
+Now I can see the `DocsExplorer` subagent in the session log:
+
+![Pic27](/demo/Screenshot%202026-11-24%20224521.png)
+
+Here's the output:
+
+```bash
+● I've read the auth and DB code. Now I'm waiting on a documentation check (better-auth, bun:sqlite, Next.js 16) before I report
+  findings.
+
+✻ Waiting for 1 background agent to finish
+
+› Message from @DocsExplorer (ctrl+o to expand)
+
+● The auth and database code that exists is correct and matches SPEC.MD and the current docs (better-auth, bun:sqlite, Next.js 16).
+  What's missing is route protection: the protected pages and the notes layer haven't been built yet.
+
+  Implemented correctly
+  - lib/db.ts
+    - It opens one shared bun:sqlite connection and keeps it on globalThis, so dev reloads don't open new ones.
+    - It turns on WAL mode, foreign keys and a busy timeout. WAL is what the Bun docs recommend.
+    - The schema and indexes match SPEC §5 exactly, with camelCase columns for the better-auth tables.
+    - get() turns Bun's null into undefined, which is right because Bun returns null when no row matches.
+  - lib/auth.ts
+    - The better-auth docs list passing a bun:sqlite Database directly as a supported pattern.
+    - nextCookies() is the last plugin, as the docs require.
+    - getSession() and getCurrentUser() use auth.api.getSession({ headers: await headers() }), the documented call.
+  - app/api/auth/[...all]/route.ts is exactly the documented route handler.
+  - lib/auth-client.ts is fine without a baseURL because the client and server share an origin.
+  - .gitignore excludes /data/ and .env*.
+
+  Gaps
+  1. No route protection. /dashboard and /notes/[id] don't check the session, and there's no proxy.ts. Next 16 renamed middleware.ts
+     to proxy.ts, and SPEC §11 requires a server-side check. Recommended setup:
+     - In proxy.ts, use getSessionCookie for a fast redirect when the cookie is missing. It only checks that the cookie exists.
+     - In each protected page and API handler, call getSession() and redirect or return 401.
+  2. Notes layer not built yet: lib/notes.ts, /api/notes/* and the share endpoint (nanoid isn't installed). The pages are
+     placeholders.
+  3. Sign-up needs name. better-auth requires it in signUp.email, but the spec only mentions email and password. The form must send
+     one, for example the part of the email before the @.
+  4. Env vars. I didn't check .env. BETTER_AUTH_SECRET is needed in production, and BETTER_AUTH_URL is recommended.
+
+  Minor
+  - minPasswordLength: 8 is already better-auth's default (8–128), so the line is redundant but harmless.
+  - The better-auth tables are created by hand in db.ts. To confirm they match, run bunx --bun auth@latest check schema. The docs
+    say the --bun flag is needed because of bun:sqlite.
+  - db.query() keeps compiled statements in a cache of 20. That suits fixed SQL; use db.prepare() if you build SQL strings
+    dynamically.
+  - If you switch to named parameters, add strict: true so a missing or misspelled parameter throws instead of silently binding
+    NULL.
+  - Route names differ from the spec: /authenticate instead of (auth)/login and (auth)/register. That's fine if intended.
+
+  The docs check didn't confirm two things: whether Next needs extra config (serverExternalPackages) to import bun:sqlite, and the
+  exact option names for the password minimum.
+
+  Next step: should I add the route protection (proxy.ts plus session checks in the pages)?
+
+● Agent "Verify better-auth/bun:sqlite/Next docs" finished · 28s
+```
