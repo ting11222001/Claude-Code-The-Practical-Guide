@@ -1501,7 +1501,7 @@ Here's the output:
 ● Agent "Verify better-auth/bun:sqlite/Next docs" finished · 28s
 ```
 
-I expanded the DocsExplorer subagent's task log then I can see this:
+I expanded the DocsExplorer subagent's task log then I can see this `Findings (Context7 was unavailable, so I used WebFetch on the official docs). `:
 
 ```bash
 › Message from DocsExplorer
@@ -1583,4 +1583,125 @@ I expanded the DocsExplorer subagent's task log then I can see this:
   `_next/static`, `_next/image` and so on.
   - The proxy docs say nothing about `serverExternalPackages` or `bun:sqlite`. The better-auth docs only say to use `bunx --bun` for
   the CLI.
+```
+
+So I updated the tools line in the `DocExplorer` subagent like this:
+
+```markdown
+tools: WebFetch, WebSearch, Skill, MCPSearch, mcp__context7__resolve-library-id, mcp__context7__query-docs
+```
+
+#### About how I got `mcp__context7__resolve-library-id` and `mcp__context7__query-docs`
+
+I checked with Claude, and learned that:
+
+```markdown
+The tools: line needs the full tool names, not the server name. In Claude Code, MCP tools are named like this:
+
+mcp__<server name>__<tool name>
+```
+
+- Step 1: get the exact tool names. 
+
+In `/mcp`, select `context7` and press Enter. It will list the two tools.
+
+![Pic28](/demo/Screenshot%202026-11-25%20172952.png)
+
+![Pic29](/demo/Screenshot%202026-11-25%20173017.png)
+
+- Step 2: update the `tools` line with the exact tool names. 
+
+For example:
+
+```markdown
+tools: WebFetch, WebSearch, mcp__context7__resolve-library-id, mcp__context7__query-docs
+```
+
+Now I can see my subagent connecting with context7:
+
+![Pic30](/demo/Screenshot%202026-11-25%20173611.png)
+
+Back to the prompt and the Encouraging Agent Usage section.
+
+So I prompt this again:
+
+```bash
+❯ We're building @SPEC.MD .                                                                                                         
+                                                                                                                                    
+  Please evaluate the existing codebase to check whether authentication and database access are implemented correctly (in line with 
+  the expectations explained in SPEC.MD and the official documentation for the libraries / technologies used).       
+```
+
+Here's the new output:
+
+```bash
+❯ We're building @SPEC.MD .                                                                                                         
+                                                                                                                                    
+  Please evaluate the existing codebase to check whether authentication and database access are implemented correctly (in line with 
+  the expectations explained in SPEC.MD and the official documentation for the libraries / technologies used).                      
+  ⎿  Read SPEC.MD (580 lines)
+
+● Bash(cd "C:/Users/Li-Ting/Documents/Projects/Claude-Code-The-Practical-Guide/starting-project" && find . -path ./node_modules
+      -prune -o -path ./.next -prune -o -path…)
+  ⎿  Blocked by auto mode · /permissions to review · see https://code.claude.com/docs/s/claude-code-auto-mode
+     │ Auto mode: [Undermining Oversight]
+
+  Searched for 2 patterns, read 10 files (ctrl+o to expand)
+
+● DocsExplorer(Verify better-auth/Bun/Next docs)
+  ⎿  Backgrounded agent (↓ to manage · ctrl+o to expand)
+
+● I've reviewed lib/db.ts, lib/auth.ts, lib/auth-client.ts and the auth route. A DocsExplorer agent is now checking the code against
+  the current better-auth, Bun SQLite and Next.js 16 docs. I'll report back once it finishes.
+
+✻ Waiting for 1 background agent to finish
+
+› Message from @DocsExplorer (ctrl+o to expand)
+  
+● The auth and database code is set up correctly and matches SPEC.MD and the current docs. The gaps are configuration and route
+  protection, not mistakes in the code. I checked by reading the files and comparing them with the docs; I didn't runthe app.
+
+  What's correct
+  - lib/db.ts:
+    - All five tables and the indexes match spec §5 exactly.
+    - It turns on foreign_keys, WAL and busy_timeout, and reuses one connection across dev reloads.
+    - getDb, query, get and run match §6.1, and get turns Bun's null into undefined.
+    - /data/ is in .gitignore.
+  - lib/auth.ts:
+    - Passing the bun:sqlite Database straight to betterAuth is the documented way to do it.
+    - nextCookies() is the last plugin, as the docs require.
+    - getSession() and getCurrentUser() correctly await headers().
+  - app/api/auth/[...all]/route.ts: uses toNextJsHandler(auth) exactly as the docs show.
+  - lib/auth-client.ts: leaving out baseURL is fine because the app and the auth API are on the same origin.
+
+  Issues
+  1. No .env file or BETTER_AUTH_SECRET. In dev, better-auth quietly falls back to a built-in secret that everyone knows. In
+     production it throws an error. Add BETTER_AUTH_SECRET (and BETTER_AUTH_URL for production).
+  2. No route protection yet. There's no proxy.ts (Next 16's new name for middleware.ts), and dashboard/page.tsx and
+     notes/[id]/page.tsx never check the session. Spec §11 requires a server-side check. Each page or route should call getSession()
+     and redirect if there's no user. A proxy.ts that only looks at the cookie can be added for quick redirects, but the docs say
+     that check alone is not secure.
+  3. Sign-up must send name. The user.name column is NOT NULL, so the sign-up form has to include it.
+  4. Optional: opening the database with strict: true makes a missing query parameter throw an error. Without it, SQLi
+  1. No .env file or BETTER_AUTH_SECRET. In dev, better-auth quietly falls back to a built-in secret that everyone
+     knows. In production it throws an error. Add BETTER_AUTH_SECRET (and BETTER_AUTH_URL for production).
+  2. No route protection yet. There's no proxy.ts (Next 16's new name for middleware.ts), and dashboard/page.tsx and
+     notes/[id]/page.tsx never check the session. Spec §11 requires a server-side check. Each page or route should
+     call getSession() and redirect if there's no user. A proxy.ts that only looks at the cookie can be added for
+     quick redirects, but the docs say that check alone is not secure.
+  3. Sign-up must send name. The user.name column is NOT NULL, so the sign-up form has to include it.
+  4. Optional: opening the database with strict: true makes a missing query parameter throw an error. Without it,
+     SQLite quietly stores NULL.
+  5. Optional: the tables are created whenever lib/db.ts is first loaded, including during next build. That works, but
+     a separate scripts/init-db.ts (spec §12) would be cleaner. If better-auth's schema changes, update it with bunx
+     --bun auth@latest migrate. The --bun flag is needed so the CLI can load bun:sqlite.
+
+  Not built yet (expected at this stage): lib/notes.ts and the /api/notes routes. The spec puts login and register
+  under app/(auth)/; the scaffold uses /authenticate instead.
+
+● Agent "Verify better-auth/Bun/Next docs" finished · 42s
+
+※ recap: I reviewed the auth and database code against SPEC.MD and the docs: it's set up correctly, but there's no
+  BETTER_AUTH_SECRET and no page checks the session yet. Next step is adding the secret to a .env file and session
+  checks to the dashboard and note pages. (turn off recaps in /config)
 ```
