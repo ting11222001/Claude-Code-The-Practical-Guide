@@ -1705,3 +1705,28 @@ Here's the new output:
   BETTER_AUTH_SECRET and no page checks the session yet. Next step is adding the secret to a .env file and session
   checks to the dashboard and note pages. (turn off recaps in /config)
 ```
+
+### Introducing Agent Skills
+
+**Agent Skills**
+
+Extra, dynamically loaded, context which can be helpful for a certain task.
+
+Example: a documentation or a combo of documents that describe React Component Best Practices
+
+↓
+
+**SKILL.md**
+
+Skills can access these additional documents or folders with documents inside.
+
+- [+ extra .md documents]
+- [+ references/ folder]
+- [+ scripts/ folder]
+- [+ assets/ folder]
+
+Usually knowledge skills that provide extra info, extra instructions, extra best practices and so on are most helpful.
+
+Agent Skills Visualisation:
+
+https://maxeddraw.com/share/deTk1yBObotJnzkFR39I15Ksgr37zUvr
