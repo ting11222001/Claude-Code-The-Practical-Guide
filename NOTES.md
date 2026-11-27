@@ -1730,3 +1730,33 @@ Usually knowledge skills that provide extra info, extra instructions, extra best
 Agent Skills Visualisation:
 
 https://maxeddraw.com/share/deTk1yBObotJnzkFR39I15Ksgr37zUvr
+
+
+### Adding Custom Skills
+
+I can add local skills that are available for the current project.
+
+For example, add a `skills` folder (exactly the same name!) under `.claude` folder.
+
+I can add one sub-folder per skill like `modern-best-practice-react-components` and create a `SKILL.md` (exactly the same name!), which must have a `name` and `description` in the metadata section.
+
+Like this:
+
+![Pic31](/demo/Screenshot%202026-11-27%20212924.png)
+
+And the content of that `SKILL.md`:
+
+```markdown
+---
+name: modern-best-practice-react-components
+description:
+---
+```
+
+Reference:
+
+![Skills Metadata](https://code.claude.com/docs/en/skills#frontmatter-reference)
+
+These skills will not be automatically loaded unlike `CLAUDE.md` which is always loaded into CC's context window. They're discovered and loaded dynamically.
+
+So this `modern-best-practice-react-components` skill should be discovered by CC whenever CC works on React components.
