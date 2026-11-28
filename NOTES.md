@@ -1795,10 +1795,276 @@ Now I just add all the templates from the tutorial:
 
 A side note: just like sub agents, skills can be added to the global level, not just inside one project.
 
-Now I can move on to the next step of building the demo app by running this prompt:
+Now I can move on to the next step of building the demo app by running this prompt in the `plan mode`:
 
 ```bash
 Let's add a proper authentication route / page content to this app. We only support email + password auth. Users can switch between modes, implemented via search params.
 
 No password resetting for this demo app.
 ```
+
+Here's the output:
+
+```bash
+────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Ready to code?
+
+ Here is Claude's plan:
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+ Plan: Email + password auth page
+
+ Context
+
+ app/authenticate/page.tsx is a placeholder. The app needs a real sign-in and sign-up page that uses
+ email and password only, with no password reset. The mode is set by a search param:
+ /authenticate?mode=signin (the default) or ?mode=signup. The better-auth setup is already done and
+ correct: lib/auth.ts has nextCookies() last, lib/auth-client.ts exists, and the /api/auth/[...all]
+ route is in place.
+
+ Approach
+
+ Use Server Actions with useActionState, following the modern Next.js skill. The actions call
+ better-auth's server API, and nextCookies() sets the session cookie from inside the action. No
+ client-side fetch is needed.
+
+ Before coding, use DocsExplorer to confirm these better-auth details:
+ - the signatures of auth.api.signInEmail and auth.api.signUpEmail
+ - the APIError shape
+ - auth.api.signOut with headers
+
+ Files
+
+ 1. lib/auth-actions.ts (new, "use server")
+    - signInAction(prevState, formData) and signUpAction(prevState, formData).
+    - Validate input with zod:
+      - email: a valid email
+      - password: 8 characters minimum, matching minPasswordLength in lib/auth.ts
+      - name: required on sign-up, because user.name is NOT NULL
+    - Call auth.api.signInEmail or auth.api.signUpEmail with { body }.
+    - Catch APIError and return { error, fields }:
+      - Use a generic "Invalid email or password" on sign-in, so the page doesn't reveal whether an
+        account exists.
+      - Use "Email already in use" on sign-up.
+    - On success, call redirect("/dashboard") outside the try/catch.
+    - signOutAction() calls auth.api.signOut({ headers: await headers() }), then redirect("/").
+ 2. app/authenticate/page.tsx (server component)
+    - Await searchParams and work out the mode. Anything other than signup means signin.
+    - If getSession() (from lib/auth.ts) returns a user, redirect to /dashboard.
+    - Render the heading and <AuthForm mode={mode} />.
+    - Add a mode-switch <Link> to ?mode=signup or ?mode=signin.
+    - Use static metadata.
+ 3. components/AuthForm.tsx ("use client")
+    - useActionState with the action that matches the mode.
+    - Form fields use semantic labels, type="email", autoComplete (email, current-password /
+      new-password, name), required and minLength={8}.
+    - Errors are shown in an aria-live region.
+    - The submit button shows a pending state and is disabled while pending.
+    - Entered values are kept after an error.
+    - Pass key={mode} so the form resets when the mode switches.
+    - Style it with Tailwind as a centered card.
+ 4. app/dashboard/page.tsx
+    - Add a server-side session check: redirect to /authenticate when there is no session.
+    - Add a sign-out <form action={signOutAction}> button so the whole sign-in and sign-out flow can be
+      tested.
+
+ No password-reset UI and no proxy.ts are in this change.
+
+ Verification
+
+ - Run bun x tsc --noEmit and bun run lint.
+ - With bun run dev, check this flow:
+   a. Sign up at ?mode=signup. You should land on /dashboard.
+   b. Sign out.
+   c. Sign in.
+   d. A wrong password shows the generic error.
+   e. Signing up with a duplicate email shows an error.
+   f. Visiting /authenticate while logged in redirects to /dashboard.
+   g. Visiting /dashboard while logged out redirects to /authenticate.
+   h. The mode-switch links toggle the form.
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────
+```
+
+But then I notice the user's `name` is captured. So I want it NOT to do that by telling it:
+
+```bash
+Don't collect the user's names. Check if we need it - if we do, use the email
+```
+
+![Pic36](/demo/Screenshot%202026-11-28%20143031.png)
+
+Then it gives me a new plan:
+
+```bash
+────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Ready to code?
+
+ Here is Claude's plan:
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+ Plan: Email + password auth page
+
+ Context
+
+ app/authenticate/page.tsx is a placeholder. The app needs a real sign-in and sign-up page that uses
+ email and password only, with no password reset. The mode is set by a search param:
+ /authenticate?mode=signin (the default) or ?mode=signup. The better-auth setup is already done and
+ correct: lib/auth.ts has nextCookies() last, lib/auth-client.ts exists, and the /api/auth/[...all]
+ route is in place.
+
+ Approach
+
+ Use Server Actions with useActionState, following the modern Next.js skill. The actions call
+ better-auth's server API, and nextCookies() sets the session cookie from inside the action. No
+ client-side fetch is needed.
+
+ Before coding, use DocsExplorer to confirm these better-auth details:
+ - the signatures of auth.api.signInEmail and auth.api.signUpEmail
+ - the APIError shape
+ - auth.api.signOut with headers
+
+ Files
+
+ 1. lib/auth-actions.ts (new, "use server")
+    - signInAction(prevState, formData) and signUpAction(prevState, formData).
+    - Validate input with zod:
+      - email: a valid email
+      - password: 8 characters minimum, matching minPasswordLength in lib/auth.ts
+    - The forms never ask for a name. better-auth does need one: signUpEmail requires name, and the
+      user.name column is NOT NULL. So the sign-up action passes name: email.
+    - Call auth.api.signInEmail or auth.api.signUpEmail with { body }.
+    - Catch APIError and return { error, fields }:
+      - Use a generic "Invalid email or password" on sign-in, so the page doesn't reveal whether an
+        account exists.
+      - Use "Email already in use" on sign-up.
+    - On success, call redirect("/dashboard") outside the try/catch.
+    - signOutAction() calls auth.api.signOut({ headers: await headers() }), then redirect("/").
+ 2. app/authenticate/page.tsx (server component)
+    - Await searchParams and work out the mode. Anything other than signup means signin.
+    - If getSession() (from lib/auth.ts) returns a user, redirect to /dashboard.
+    - Render the heading and <AuthForm mode={mode} />.
+    - Add a mode-switch <Link> to ?mode=signup or ?mode=signin.
+    - Use static metadata.
+ 3. components/AuthForm.tsx ("use client")
+    - useActionState with the action that matches the mode.
+    - The form has only two fields, email and password, in both modes.
+    - Fields use semantic labels, type="email", autoComplete (email, current-password / new-password),
+      required and minLength={8}.
+    - Errors are shown in an aria-live region.
+    - The submit button shows a pending state and is disabled while pending.
+    - Entered values are kept after an error.
+    - Errors are shown in an aria-live region.
+    - The submit button shows a pending state and is disabled while pending.
+    - Entered values are kept after an error.
+    - Pass key={mode} so the form resets when the mode switches.
+    - Style it with Tailwind as a centered card.
+ 4. app/dashboard/page.tsx
+    - Add a server-side session check: redirect to /authenticate when there is no session.
+    - Add a sign-out <form action={signOutAction}> button so the whole sign-in and sign-out flow can be
+      tested.
+
+ No password-reset UI and no proxy.ts are in this change.
+
+ Verification
+
+ - Run bun x tsc --noEmit and bun run lint.
+ - With bun run dev, check this flow:
+   a. Sign up at ?mode=signup. You should land on /dashboard.
+   b. Sign out.
+   c. Sign in.
+   d. A wrong password shows the generic error.
+   e. Signing up with a duplicate email shows an error.
+   f. Visiting /authenticate while logged in redirects to /dashboard.
+   g. Visiting /dashboard while logged out redirects to /authenticate.
+   h. The mode-switch links toggle the form.
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────
+```
+
+Now let it run and make edits.
+
+
+While it's working/running, I can always send a prompt to CC and it will inject the prompt when it has time:
+
+```bash
+make sure you use modern, clean HTML / JSX and Tailwind code.
+```
+
+or I can follow up and ask CC if it has done that for me.
+
+![Pic37](/demo/Screenshot%202026-11-28%20143507.png)
+
+Once it finished:
+
+```bash
+● The sign-in and sign-up page is built: /authenticate signs in by default and ?mode=signup creates an
+  account. The code type-checks and lints cleanly, but I haven't tested it in the running app. You
+  declined the smoke test, which would have written a test user into the database, so I stopped the dev
+  server.
+
+  - Server actions (lib/auth-actions.ts): sign in, sign up and sign out run on the server, and the
+    inputs are checked with zod.
+    - Sign-in errors always say "Invalid email or password", so the page doesn't reveal whether an
+      account exists.
+    - A duplicate email on sign-up shows "An account with this email already exists."
+    - Success goes to /dashboard; signing out goes to /.
+  - No name collected: the form only asks for email and password. better-auth requires a name, so
+    sign-up stores the email as the name.
+  - Form (components/AuthForm.tsx):
+    - It has labelled email and password fields with the right autofill hints.
+    - Errors are announced to screen readers.
+    - The button shows a pending state, and the email is kept after an error.
+    - A "At least 8 characters" hint appears only on sign-up.
+  - Page (app/authenticate/page.tsx): a centered card with a link to switch modes. A logged-in user is
+    sent to /dashboard.
+  - Dashboard (app/dashboard/page.tsx): now checks the session on the server and redirects to
+    /authenticate if you're logged out. It shows your email and a sign-out button.
+  - There is no password reset.
+
+  The flow I planned to test: sign up, sign out, sign in, try a wrong password, try a duplicate email,
+  and check that both redirects work.
+
+  There's still no .env file, so in dev better-auth signs sessions with its publicly known default
+  secret. Add BETTER_AUTH_SECRET before deploying; production won't start without it.
+```
+
+Test it by:
+
+```bash
+$cd starting-project/
+$bun run dev
+```
+
+Then, go to `http://localhost:3001/authenticate` or `http://localhost:3001/authenticate?mode=signin`.
+
+Now I can see this page like this:
+
+![Pic38](/demo/Screenshot%202026-11-28%20144057.png)
+
+Then, I can click on the `sign up` link i.e. `http://localhost:3001/authenticate?mode=signup` to see this:
+
+![Pic39](/demo/Screenshot%202026-11-28%20144339.png)
+
+If I try to fill in the test email and password on this `sign up`/ `Create Account` page to test it locally:
+
+```
+Email: test@gmail.com
+Password: some made-up passwords
+```
+
+Click `Sign Up` button, and it seems to work.
+
+The log doesn't show any errors:
+
+![Pic40](/demo/Screenshot%202026-11-28%20144801.png)
+
+And it redirects to `http://localhost:3001/dashboard` fine:
+
+![Pic41](/demo/Screenshot%202026-11-28%20144953.png)
+
+Then hit `sign out` button, I can come back to this Landing Page with no error logs:
+
+![Pic42](/demo/Screenshot%202026-11-28%20145105.png)
+
+![Pic43](/demo/Screenshot%202026-11-28%20145817.png)
