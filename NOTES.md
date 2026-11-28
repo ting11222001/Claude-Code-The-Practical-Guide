@@ -1011,17 +1011,21 @@ MCP is simply giving CC more tools for it to leverage.
 
 https://code.claude.com/docs/en/mcp-quickstart
 
-For example, context7, which gives CC the ability to access official docs of libraries.
+For example, Context7, which gives CC the ability to access official docs of libraries.
 
 https://github.com/upstash/context7
 
-Run this command to install context7 to my Claude Code:
+Intro of Context7:
+
+https://context7.com/docs/overview
+
+Run this command to install Context7 to my Claude Code:
 
 ```bash
 $ claude mcp add context7 -- npx -y @upstash/context7-mcp
 ```
 
-It's not on the README of context7 github anymore. There is more detailed command on here:
+It's not on the README of Context7 github anymore. There is more detailed command on here:
 
 https://context7.com/docs/resources/all-clients#claude-code
 
@@ -1236,7 +1240,7 @@ The database layer and the better-auth setup are in place. Type-check and lint p
 > Implement authentication and database access as described in `@SPEC.MD`.
 > Add a `lib` folder with `auth.ts` and `db.ts` files. Export a db handle in `db.ts`,
 > use WAL mode, and create all required tables if they don't exist yet.
-> Use web search or the context7 MCP for Bun SQLite and better-auth docs.
+> Use web search or the Context7 MCP for Bun SQLite and better-auth docs.
 
 **Plan (approved):**
 - `lib/db.ts`: `bun:sqlite` at `data/app.db`, singleton on `globalThis` (avoids extra
@@ -1744,12 +1748,12 @@ Like this:
 
 ![Pic31](/demo/Screenshot%202026-11-27%20212924.png)
 
-And the content of that `SKILL.md`:
+And the markdown metadata of that `SKILL.md`:
 
 ```markdown
 ---
 name: modern-best-practice-react-components
-description:
+description: Build clean, modern React components that apply common best practices and avoid common pitfalls like unnecessary state management or useEffect usage
 ---
 ```
 
@@ -1760,3 +1764,41 @@ Reference:
 These skills will not be automatically loaded unlike `CLAUDE.md` which is always loaded into CC's context window. They're discovered and loaded dynamically.
 
 So this `modern-best-practice-react-components` skill should be discovered by CC whenever CC works on React components.
+
+Note that both `name` and `description` are important for CC to know if it should use the skill. CC will load these text in the metadata section into its context window (actually all the skill files and their name and description will be loaded into the CC context window). But the main content underneath will only be loaded when CC decides to use that skill.
+
+It seems that only the `description` field is required now:
+
+https://code.claude.com/docs/en/skills#frontmatter-reference
+
+As the doc said for the `description` field: What the skill does and when to use it. Claude uses this to decide when to apply the skill. 
+
+![Pic32](/demo/Screenshot%202026-11-28%20140045.png)
+
+![Pic33](/demo/Screenshot%202026-11-28%20135943.png)
+
+So now I just set up the `modern-best-practice-react-components` skill using the tutorial's template.
+
+In that skill template, the main thing is to keep the skills really concise.
+
+So I can add a separate markdown file and let the skill file to refer to it later, which has extra rules and examples:
+
+```
+See the ["You Might Not Need An Effect" guide](references/you-dont-need-useeffect.md)
+```
+
+![Pic34](/demo/Screenshot%202026-11-28%20141251.png)
+
+Now I just add all the templates from the tutorial:
+
+![Pic35](/demo/Screenshot%202026-11-28%20141419.png)
+
+A side note: just like sub agents, skills can be added to the global level, not just inside one project.
+
+Now I can move on to the next step of building the demo app by running this prompt:
+
+```bash
+Let's add a proper authentication route / page content to this app. We only support email + password auth. Users can switch between modes, implemented via search params.
+
+No password resetting for this demo app.
+```
